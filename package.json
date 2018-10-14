@@ -1,0 +1,13 @@
+{
+  "name": "CureAI",
+  "version": "0.1.0",
+  "description": "CureAI for MHacks11",
+  "author": "Atilla Saadat",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.1"
+  }
+}
