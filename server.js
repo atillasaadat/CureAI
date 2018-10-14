@@ -6,6 +6,7 @@
 
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
+const axios = require('axios');
 //const assignments = require('./data.json');
 
 const uri = "mongodb+srv://test_user:c4cNxAy2cvMVd9RI@cureai-xicbd.gcp.mongodb.net/test?retryWrites=true";
@@ -56,7 +57,7 @@ app.get('/users/auth/:user/:pass', function (req, res) {
             }
 
             client.close();
-        });
+        }).catch(error => console.log);
     });
 })
 
@@ -88,8 +89,46 @@ app.get('/users/create/:user/:email/:pass/', function (req, res) {
                 user: doc
             })
             client.close();
-        });
+        }).catch(error => console.log);
     });
+})
+
+// Create Facebook User
+app.get('/users/createFB/:token', function (req, res) {
+    var token = req.params.token;
+    
+    axios.get('https://graph.facebook.com/me?fields=email,first_name,last_name,gender,birthday&access_token=' + token)
+    .then(response => {
+        var emailText = response.data.email;
+        var firstText = response.data.first_name;
+        var lastText = response.data.last_name;
+        var birthdayText = response.data.birthday;
+        var genderText = response.data.gender;
+
+        MongoClient.connect(uri, function(err, client) {
+            const collection = client.db("CureAI").collection("users");
+            const doc = {
+                username: '',
+                email: emailText,
+                password: '',
+                firstName: firstText,
+                lastName: lastText,
+                birthday: birthdayText,
+                gender: genderText,
+                occupation: '',
+                relationshipStatus: '',
+                chatLogs: []
+            };
+
+            collection.update({ email: emailText }, { $set: doc }, {upsert: true}).then((response) => {
+                res.status(200).json({
+                    status: "success",
+                    user: doc
+                })
+                client.close();
+            });
+        });
+    }).catch(error => console.log);
 })
 
 // More Info
@@ -113,23 +152,16 @@ app.get('/users/moreInfo/:user/:first/:last/:birth/:sex/:job/:relation/', functi
             relationshipStatus: relation
         };
 
-        collection.findOneAndUpdate({ username: user }, { $set: changes }, {returnNewDocument: true}).then((doc) => {
-            res.status(200).json({
-                status: "success",
-                user: doc
-            })
-            client.close();
-        });
+        collection.update({ username: user }, { $set: changes }).then((doc) => {
+            collection.findOne({ username: user }).then((newDoc) => {
+                res.status(200).json({
+                    status: "success",
+                    user: newDoc
+                });
+                client.close();
+            });
+        }).catch(error => console.log);
     });
-})
-
-// More Info
-app.get('/users/addLogs/:user/:msg/:response', function (req, res) {
-    var user = req.params.user;
-    var msg = req.params.msg;
-    var response = req.params.response;
-
-    
 })
 
 // Get Therapist Response
@@ -160,7 +192,7 @@ app.get('/therapist/ask/:email/:msg', function (req, res) {
                 user: doc
             })
             client.close();
-        });
+        }).catch(error => console.log);
     });
 
     res.status(200).json({
