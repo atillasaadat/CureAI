@@ -77,7 +77,8 @@ app.get('/users/create/:user/:email/:pass/', function (req, res) {
             birthday: '',
             gender: '',
             occupation: '',
-            relationshipStatus: ''
+            relationshipStatus: '',
+            chatLogs: []
         };
 
         collection.insertOne(doc).then((result) => {
@@ -122,13 +123,49 @@ app.get('/users/moreInfo/:user/:first/:last/:birth/:sex/:job/:relation/', functi
     });
 })
 
-// Get Therapist Response
-app.get('/therapist/ask/:msg', function (req, res) {
+// More Info
+app.get('/users/addLogs/:user/:msg/:response', function (req, res) {
+    var user = req.params.user;
     var msg = req.params.msg;
-    console.log(msg);
+    var response = req.params.response;
+
+    
+})
+
+// Get Therapist Response
+app.get('/therapist/ask/:email/:msg', function (req, res) {
+    var emailText = req.params.email;
+    var msg = req.params.msg;
+    var response;
+
+    // Clinc Login Here (set response variable)
+    // ============================
+
+    response = "So how does that make you feel?";
+
+    // ============================
+
+    MongoClient.connect(uri, function(err, client) {
+        const collection = client.db("CureAI").collection("users");
+        const changes = {
+            chatLogs: { 
+                userMessage: msg,
+                therapistResponse: response
+            }
+        };
+
+        collection.findOneAndUpdate({ email: emailText }, { $push: changes }, {returnNewDocument: true}).then((doc) => {
+            res.status(200).json({
+                status: "success",
+                user: doc
+            })
+            client.close();
+        });
+    });
+
     res.status(200).json({
         status: "success",
-        msg: "So how does that make you feel?"
+        msg: response
     })
 });
 
