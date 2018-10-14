@@ -37,7 +37,6 @@ app.post('/clinc', (req, res) => {
 
 // Authenticate and Get User
 app.get('/users/auth/:user/:pass', function (req, res) {
-    console.log("gay");
     var user = req.params.user;
     var pass = req.params.pass;
 
@@ -122,6 +121,16 @@ app.get('/users/moreInfo/:user/:first/:last/:birth/:sex/:job/:relation/', functi
         });
     });
 })
+
+// Get Therapist Response
+app.get('/therapist/ask/:msg', function (req, res) {
+    var msg = req.params.msg;
+    console.log(msg);
+    res.status(200).json({
+        status: "success",
+        msg: "So how does that make you feel?"
+    })
+});
 
 app.listen(PORT, () => {
     console.log(`Running on port ` + PORT);
